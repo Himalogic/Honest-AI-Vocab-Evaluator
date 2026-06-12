@@ -144,29 +144,29 @@ const VOCAB_TERMS = [
   }
 ];
 
-const REWRITE_SENTENCES = [
+const REWRITE_EXERCISES = [
   {
-    text: "The {agent} autonomously {reasoning} through the compliance checklist before {thinking} about edge cases.",
-    slots: ["agent", "reasoning", "thinking"]
+    before: "The [[agent]] [[reasoned]] through the compliance checklist before [[thinking]] about edge cases on its own.",
+    after: "The system its operator deployed ran through the compliance checklist, then processed the edge cases it was configured to handle."
   },
   {
-    text: "Clinicians trusted the system's {intelligence} even when it {hallucination} patient histories.",
-    slots: ["intelligence", "hallucination"]
+    before: "Clinicians trusted the system's [[intelligence]] even when it [[hallucinated]] patient histories.",
+    after: "Clinicians trusted the system's predictions even when it fabricated patient histories."
   },
   {
-    text: "Investors poured billions into {agi} while the startup's {behavior} impressed demo audiences.",
-    slots: ["agi", "behavior"]
+    before: "Investors poured billions into [[AGI]] while the startup's [[behavior]] impressed demo audiences.",
+    after: "Investors poured billions into a destination no one could define, while the startup's outputs impressed demo audiences."
   },
   {
-    text: "Users wondered whether the chatbot's {consciousness} explained its unusually empathetic {behavior}.",
-    slots: ["consciousness", "behavior"]
+    before: "Users wondered whether the chatbot's [[consciousness]] explained its unusually empathetic [[behavior]].",
+    after: "Users wondered whether the chatbot was conscious, when what they saw was how convincingly it mimicked empathy in its outputs."
   },
   {
-    text: "The {agent} was {reasoning} about trade-offs, visibly {thinking} before it responded.",
-    slots: ["agent", "reasoning", "thinking"]
+    before: "The model [[learned]] to refuse unsafe requests, and the new caution [[emerged]] at scale.",
+    after: "Engineers tuned the model to refuse unsafe requests, and the new caution was replicated from patterns already in its training data."
   },
   {
-    text: "When the model {hallucination} a statute, lawyers blamed its {intelligence} rather than its designers.",
-    slots: ["hallucination", "intelligence"]
+    before: "When the model [[hallucinated]] a statute, lawyers blamed its [[intelligence]] rather than its designers.",
+    after: "When the model fabricated a statute, lawyers blamed its predictions rather than the people who built and shipped it."
   }
 ];

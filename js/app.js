@@ -1,6 +1,4 @@
 (function () {
-  const termsById = Object.fromEntries(VOCAB_TERMS.map((t) => [t.id, t]));
-
   // --- Tabs ---
   const tabs = document.querySelectorAll(".tab");
   const panels = document.querySelectorAll(".panel");
@@ -182,67 +180,45 @@
   // --- Rewrite ---
   const rewriteContainer = document.getElementById("rewrite-exercises");
   let rewriteIndex = 0;
-  let rewriteOrder = shuffle([...REWRITE_SENTENCES]);
+  let rewriteOrder = shuffle([...REWRITE_EXERCISES]);
 
   function renderRewrite() {
     if (rewriteIndex >= rewriteOrder.length) {
-      rewriteOrder = shuffle([...REWRITE_SENTENCES]);
+      rewriteOrder = shuffle([...REWRITE_EXERCISES]);
       rewriteIndex = 0;
     }
     const ex = rewriteOrder[rewriteIndex];
     const card = document.createElement("div");
     card.className = "rewrite-card";
 
-    const sentence = document.createElement("p");
-    sentence.className = "rewrite-sentence";
-    sentence.appendChild(buildRewriteSentence(ex));
-    card.appendChild(sentence);
+    const before = document.createElement("p");
+    before.className = "rewrite-sentence";
+    before.innerHTML = highlightFlags(ex.before);
+    card.appendChild(before);
 
-    const suggestion = document.createElement("p");
-    suggestion.className = "rewrite-suggestion";
-    suggestion.textContent = "Click a highlighted word to see a careful alternative.";
-    card.appendChild(suggestion);
+    const revealBtn = document.createElement("button");
+    revealBtn.type = "button";
+    revealBtn.className = "btn reveal-rewrite";
+    revealBtn.textContent = "Reveal a careful rewrite";
+    card.appendChild(revealBtn);
 
-    sentence.addEventListener("click", (e) => {
-      const word = e.target.closest(".rewrite-word");
-      if (!word) return;
-      const term = termsById[word.dataset.termId];
-      if (!term) return;
-      word.classList.add("revealed");
-      word.textContent = term.replacement;
-      word.title = term.better;
-      suggestion.textContent = `${term.misleading} \u2192 ${term.replacement}: ${term.better}`;
+    const after = document.createElement("p");
+    after.className = "rewrite-after";
+    after.hidden = true;
+    after.textContent = ex.after;
+    card.appendChild(after);
+
+    revealBtn.addEventListener("click", () => {
+      after.hidden = false;
+      revealBtn.disabled = true;
     });
 
     rewriteContainer.innerHTML = "";
     rewriteContainer.appendChild(card);
   }
 
-  function buildRewriteSentence(ex) {
-    const frag = document.createDocumentFragment();
-    const re = /\{(\w+)\}/g;
-    let last = 0;
-    let m;
-    while ((m = re.exec(ex.text)) !== null) {
-      if (m.index > last) {
-        frag.appendChild(document.createTextNode(ex.text.slice(last, m.index)));
-      }
-      const id = m[1];
-      const term = termsById[id];
-      const span = document.createElement("span");
-      span.className = "rewrite-word";
-      span.dataset.termId = id;
-      span.textContent = term ? term.misleading : m[1];
-      span.setAttribute("role", "button");
-      span.setAttribute("tabindex", "0");
-      span.setAttribute("aria-label", `Careful alternative for ${span.textContent}`);
-      frag.appendChild(span);
-      last = m.index + m[0].length;
-    }
-    if (last < ex.text.length) {
-      frag.appendChild(document.createTextNode(ex.text.slice(last)));
-    }
-    return frag;
+  function highlightFlags(text) {
+    return esc(text).replace(/\[\[(.+?)\]\]/g, '<span class="rewrite-flag">$1</span>');
   }
 
   document.getElementById("rewrite-next").addEventListener("click", () => {
