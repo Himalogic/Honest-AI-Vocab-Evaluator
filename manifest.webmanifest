@@ -1,0 +1,20 @@
+{
+  "name": "Honest AI Vocabulary Evaluator",
+  "short_name": "AI Vocabulary",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#363231",
+  "theme_color": "#363231",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
