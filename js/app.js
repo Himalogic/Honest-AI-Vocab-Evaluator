@@ -2,7 +2,7 @@
   // --- Tab elements ---
   const tabs = document.querySelectorAll(".tab");
   const panels = document.querySelectorAll(".panel");
-  const TAB_IDS = ["glossary", "practice", "rewrite", "etymology"];
+  const TAB_IDS = ["glossary", "rewrite", "etymology", "analyze"];
 
   function setActiveTab(panelId) {
     const target = TAB_IDS.includes(panelId) ? panelId : "glossary";
@@ -112,86 +112,6 @@
   renderFilters();
   renderGlossary();
 
-  // --- Practice ---
-  const PRACTICE_TERMS = VOCAB_TERMS.filter((t) => t.type !== "caution");
-  let practiceIndex = 0;
-  let practiceOrder = shuffle([...PRACTICE_TERMS]);
-  let score = { correct: 0, total: 0 };
-
-  const practiceTerm = document.getElementById("practice-term");
-  const practiceAnswer = document.getElementById("practice-answer");
-  const practiceFeedback = document.getElementById("practice-feedback");
-  const practiceHintText = document.getElementById("practice-hint-text");
-  const practiceScore = document.getElementById("practice-score");
-  const practiceHint = document.getElementById("practice-hint");
-
-  function showPracticeTerm() {
-    if (practiceIndex >= practiceOrder.length) {
-      practiceOrder = shuffle([...PRACTICE_TERMS]);
-      practiceIndex = 0;
-    }
-    const t = practiceOrder[practiceIndex];
-    practiceTerm.textContent = t.misleading;
-    practiceAnswer.value = "";
-    practiceAnswer.focus();
-    practiceFeedback.textContent = "";
-    practiceFeedback.className = "practice-feedback";
-    practiceHint.open = false;
-    practiceHintText.textContent = t.problem;
-    updateScore();
-  }
-
-  function acceptedAnswers(t) {
-    const base = [t.replacement, ...(t.replacementAlternatives || [])];
-    return base.map(normalize);
-  }
-
-  function checkAnswer(revealOnly) {
-    const t = practiceOrder[practiceIndex];
-    const answers = acceptedAnswers(t);
-    const given = normalize(practiceAnswer.value);
-
-    if (!revealOnly && given) {
-      score.total += 1;
-      const ok = answers.some((a) => a === given || a.includes(given) || given.includes(a));
-      if (ok) {
-        score.correct += 1;
-        practiceFeedback.textContent = `Correct: "${t.replacement}"`;
-        practiceFeedback.className = "practice-feedback correct";
-      } else {
-        practiceFeedback.innerHTML = `Not quite. Accepted: <strong>${esc(t.replacement)}</strong>`;
-        practiceFeedback.className = "practice-feedback incorrect";
-      }
-      updateScore();
-      return;
-    }
-
-    practiceAnswer.value = t.replacement;
-    practiceFeedback.innerHTML = `Answer: <strong>${esc(t.replacement)}</strong>`;
-    practiceFeedback.className = "practice-feedback";
-  }
-
-  function updateScore() {
-    if (score.total === 0) {
-      practiceScore.textContent = "";
-      return;
-    }
-    const pct = Math.round((score.correct / score.total) * 100);
-    practiceScore.textContent = `Session: ${score.correct} / ${score.total} correct (${pct}%)`;
-  }
-
-  document.getElementById("practice-check").addEventListener("click", () => checkAnswer(false));
-  document.getElementById("practice-reveal").addEventListener("click", () => checkAnswer(true));
-  document.getElementById("practice-next").addEventListener("click", () => {
-    practiceIndex += 1;
-    showPracticeTerm();
-  });
-  practiceAnswer.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") checkAnswer(false);
-  });
-
-  showPracticeTerm();
-
   // --- Rewrite ---
   const rewriteContainer = document.getElementById("rewrite-exercises");
   let rewriteIndex = 0;
@@ -245,7 +165,7 @@
 
   // --- Etymology ---
   const ETYMOLOGY_SUGGESTIONS = ["intelligence", "agent", "artificial", "consciousness", "hallucination"];
-  const ETYMOLOGY_SESSION_PREFIX = "etymology:v3:wiktionary:";
+  const ETYMOLOGY_SESSION_PREFIX = "etymology:v1:";
   const etymologyWord = document.getElementById("etymology-word");
   const etymologyFeedback = document.getElementById("etymology-feedback");
   const etymologyResults = document.getElementById("etymology-results");
@@ -272,31 +192,10 @@
     return `${ETYMOLOGY_SESSION_PREFIX}${word.toLowerCase()}`;
   }
 
-  function etymologyIsShortDerivation(text) {
-    return typeof text === "string"
-      && text.length <= 100
-      && /^(?:From|Formed from|Coined from)\s+[a-z][a-z0-9'-]*\s+\+/i.test(text);
-  }
-
-  function etymologyNeedsRootFetch(data) {
-    if (!data || !Array.isArray(data.entries) || data.entries.length !== 1) {
-      return false;
-    }
-    const first = data.entries[0];
-    const text = first && first.etymologies && first.etymologies[0];
-    return etymologyIsShortDerivation(text);
-  }
-
   function readEtymologySession(word) {
     try {
       const raw = sessionStorage.getItem(etymologySessionKey(word));
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (data.source !== "wiktionary" || etymologyNeedsRootFetch(data)) {
-        sessionStorage.removeItem(etymologySessionKey(word));
-        return null;
-      }
-      return data;
+      return raw ? JSON.parse(raw) : null;
     } catch (err) {
       return null;
     }
@@ -336,11 +235,12 @@
     });
 
     if (data.attribution) {
+      const sourceLabel = data.source === "wiktionary" ? "View on Wiktionary" : "View source";
       const sourceLink = data.sourceUrl
-        ? `<a href="${esc(data.sourceUrl)}" rel="noopener noreferrer">View on Wiktionary</a>`
+        ? `<a href="${esc(data.sourceUrl)}" rel="noopener noreferrer">${sourceLabel}</a>`
         : "";
       const etymonlineUrl = `https://www.etymonline.com/word/${encodeURIComponent(data.word)}`;
-      const etymonlineLink = `<a href="${esc(etymonlineUrl)}" rel="noopener noreferrer" target="_blank">Compare on Etymonline</a>`;
+      const etymonlineLink = `<a href="${esc(etymonlineUrl)}" rel="noopener noreferrer">Compare on Etymonline</a>`;
       const links = [sourceLink, etymonlineLink].filter(Boolean).join(" \u00b7 ");
       html += `<p class="etymology-attribution">${esc(data.attribution)}${links ? ` \u00b7 ${links}` : ""}</p>`;
     }
@@ -486,14 +386,6 @@
     const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
-  }
-
-  function normalize(s) {
-    return s
-      .toLowerCase()
-      .replace(/[?.!,'"]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
   }
 
   function shuffle(arr) {

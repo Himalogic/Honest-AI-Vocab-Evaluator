@@ -29,9 +29,9 @@
 
   <nav class="tab-nav wrap" role="tablist" aria-label="Main sections">
     <button class="tab active" role="tab" aria-selected="true" aria-controls="panel-glossary" id="tab-glossary" data-panel="glossary">Glossary</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-practice" id="tab-practice" data-panel="practice">Practice</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-rewrite" id="tab-rewrite" data-panel="rewrite">Rewrite</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-etymology" id="tab-etymology" data-panel="etymology">Etymology</button>
+    <button class="tab tab-tool" role="tab" aria-selected="false" aria-controls="panel-analyze" id="tab-analyze" data-panel="analyze">Analyze</button>
   </nav>
 
   <main class="wrap">
@@ -43,28 +43,6 @@
         <div class="filter-group" id="source-filters" aria-label="Filter by source"></div>
       </div>
       <div id="glossary-list" class="glossary-list"></div>
-    </section>
-
-    <section id="panel-practice" class="panel" role="tabpanel" aria-labelledby="tab-practice" hidden>
-      <div class="practice-card" id="practice-card">
-        <p class="practice-label">What is a more careful replacement for:</p>
-        <p class="practice-term" id="practice-term"></p>
-        <div class="practice-input-row">
-          <label class="visually-hidden" for="practice-answer">Your answer</label>
-          <input type="text" id="practice-answer" placeholder="Type the better word or phrase" autocomplete="off">
-          <button type="button" class="btn primary" id="practice-check">Check</button>
-        </div>
-        <div class="practice-feedback" id="practice-feedback" aria-live="polite"></div>
-        <details class="practice-hint" id="practice-hint">
-          <summary>Why this word misleads</summary>
-          <p id="practice-hint-text"></p>
-        </details>
-        <div class="practice-actions">
-          <button type="button" class="btn" id="practice-reveal">Reveal answer</button>
-          <button type="button" class="btn primary" id="practice-next">Next term</button>
-        </div>
-        <p class="practice-score" id="practice-score"></p>
-      </div>
     </section>
 
     <section id="panel-rewrite" class="panel" role="tabpanel" aria-labelledby="tab-rewrite" hidden>
@@ -86,6 +64,19 @@
         <div class="etymology-feedback" id="etymology-feedback" aria-live="polite"></div>
         <div id="etymology-results" class="etymology-results" hidden></div>
       </div>
+    </section>
+
+    <section id="panel-analyze" class="panel" role="tabpanel" aria-labelledby="tab-analyze" hidden>
+      <p class="panel-intro">Paste a draft to see which words might be carrying more than they should. This surfaces terms worth a second look, it does not judge the writing, and it runs entirely in your browser. Nothing you paste leaves this page.</p>
+      <label class="visually-hidden" for="analyze-input">Text to analyze</label>
+      <textarea id="analyze-input" class="analyze-input" rows="8" placeholder="Paste a paragraph or a draft here."></textarea>
+      <div class="analyze-toolbar">
+        <button type="button" class="btn primary" id="analyze-run">Analyze</button>
+        <button type="button" class="btn" id="analyze-clear">Clear</button>
+      </div>
+      <p class="analyze-summary" id="analyze-summary" aria-live="polite"></p>
+      <div class="analyze-output" id="analyze-output" hidden></div>
+      <div class="analyze-findings" id="analyze-findings"></div>
     </section>
   </main>
 
@@ -146,5 +137,6 @@
   <script src="js/terms.js"></script>
   <script src="js/app.js"></script>
   <script src="js/suggest.js"></script>
+  <script src="js/analyze.js"></script>
 </body>
 </html>
