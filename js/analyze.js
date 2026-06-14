@@ -23,8 +23,9 @@
     "transformer", "it", "its"
   ]);
 
-  const SENTENCE_END = /[.!?]/;
-  const CUE_WINDOW = 4;
+  // A clause/sentence boundary. The cue search stops here so a subject is not
+  // borrowed across a sentence break or a semicolon.
+  const BOUNDARY = /[.!?;]/;
 
   // form -> { id, scan, neg:Set }
   const FORM_MAP = new Map();
@@ -46,12 +47,12 @@
     return tokens;
   }
 
+  // A gated term flags only when a machine cue appears earlier in the same
+  // sentence. Walking back token by token, we stop at the first sentence or
+  // clause boundary so the subject of one sentence does not leak into the next.
   function cuePrecedes(text, tokens, i) {
-    let steps = 0;
-    for (let j = i - 1; j >= 0 && steps < CUE_WINDOW; j--, steps++) {
-      // Stop at a sentence boundary so we do not borrow a subject from the
-      // previous sentence.
-      if (SENTENCE_END.test(text.slice(tokens[j].end, tokens[j + 1].start))) break;
+    for (let j = i - 1; j >= 0; j--) {
+      if (BOUNDARY.test(text.slice(tokens[j].end, tokens[j + 1].start))) break;
       if (CUES.has(tokens[j].lower)) return true;
     }
     return false;

@@ -59,16 +59,34 @@
     return term.id;
   }
 
+  // Rank a term against the query. Headword matches outrank replacement
+  // matches, which outrank matches buried in the body text. This keeps the
+  // term that *is* the search word at the top.
+  function matchScore(t, q) {
+    const m = t.misleading.toLowerCase();
+    const r = (t.replacement || "").toLowerCase();
+    const alts = (t.replacementAlternatives || []).join(" ").toLowerCase();
+    const body = [t.problem, t.better].filter(Boolean).join(" ").toLowerCase();
+    if (m === q) return 100;
+    if (m.startsWith(q)) return 80;
+    if (m.includes(q)) return 60;
+    if (r === q) return 50;
+    if (r.includes(q)) return 40;
+    if (alts.includes(q)) return 30;
+    if (body.includes(q)) return 10;
+    return 0;
+  }
+
   function renderGlossary() {
     const q = searchInput.value.trim().toLowerCase();
-    const filtered = VOCAB_TERMS.filter((t) => {
-      if (activeSource !== "all" && t.source !== activeSource) return false;
-      if (!q) return true;
-      const hay = [t.misleading, t.replacement, t.problem, t.better, ...(t.replacementAlternatives || [])]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    });
+    let filtered = VOCAB_TERMS.filter((t) => activeSource === "all" || t.source === activeSource);
+    if (q) {
+      filtered = filtered
+        .map((t) => ({ t: t, s: matchScore(t, q) }))
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s)
+        .map((x) => x.t);
+    }
 
     glossaryList.innerHTML = "";
     if (!filtered.length) {
