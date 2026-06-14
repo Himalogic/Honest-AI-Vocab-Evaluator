@@ -245,7 +245,7 @@
 
   // --- Etymology ---
   const ETYMOLOGY_SUGGESTIONS = ["intelligence", "agent", "artificial", "consciousness", "hallucination"];
-  const ETYMOLOGY_SESSION_PREFIX = "etymology:v1:";
+  const ETYMOLOGY_SESSION_PREFIX = "etymology:v3:wiktionary:";
   const etymologyWord = document.getElementById("etymology-word");
   const etymologyFeedback = document.getElementById("etymology-feedback");
   const etymologyResults = document.getElementById("etymology-results");
@@ -272,10 +272,31 @@
     return `${ETYMOLOGY_SESSION_PREFIX}${word.toLowerCase()}`;
   }
 
+  function etymologyIsShortDerivation(text) {
+    return typeof text === "string"
+      && text.length <= 100
+      && /^(?:From|Formed from|Coined from)\s+[a-z][a-z0-9'-]*\s+\+/i.test(text);
+  }
+
+  function etymologyNeedsRootFetch(data) {
+    if (!data || !Array.isArray(data.entries) || data.entries.length !== 1) {
+      return false;
+    }
+    const first = data.entries[0];
+    const text = first && first.etymologies && first.etymologies[0];
+    return etymologyIsShortDerivation(text);
+  }
+
   function readEtymologySession(word) {
     try {
       const raw = sessionStorage.getItem(etymologySessionKey(word));
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.source !== "wiktionary" || etymologyNeedsRootFetch(data)) {
+        sessionStorage.removeItem(etymologySessionKey(word));
+        return null;
+      }
+      return data;
     } catch (err) {
       return null;
     }
@@ -315,12 +336,11 @@
     });
 
     if (data.attribution) {
-      const sourceLabel = data.source === "wiktionary" ? "View on Wiktionary" : "View source";
       const sourceLink = data.sourceUrl
-        ? `<a href="${esc(data.sourceUrl)}" rel="noopener noreferrer">${sourceLabel}</a>`
+        ? `<a href="${esc(data.sourceUrl)}" rel="noopener noreferrer">View on Wiktionary</a>`
         : "";
       const etymonlineUrl = `https://www.etymonline.com/word/${encodeURIComponent(data.word)}`;
-      const etymonlineLink = `<a href="${esc(etymonlineUrl)}" rel="noopener noreferrer">Compare on Etymonline</a>`;
+      const etymonlineLink = `<a href="${esc(etymonlineUrl)}" rel="noopener noreferrer" target="_blank">Compare on Etymonline</a>`;
       const links = [sourceLink, etymonlineLink].filter(Boolean).join(" \u00b7 ");
       html += `<p class="etymology-attribution">${esc(data.attribution)}${links ? ` \u00b7 ${links}` : ""}</p>`;
     }

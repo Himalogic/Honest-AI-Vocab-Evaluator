@@ -214,6 +214,80 @@ function wiktionary_extract_etymologies(string $html): array
     }));
 }
 
+function wiktionary_extract_derivation_root(string $text): ?string
+{
+    if (!preg_match('/^(?:From|Formed from|Coined from)\s+([a-z][a-z0-9\'-]*)\s+\+/i', $text, $matches)) {
+        return null;
+    }
+
+    return strtolower($matches[1]);
+}
+
+function wiktionary_is_short_derivation(string $text): bool
+{
+    $root = wiktionary_extract_derivation_root($text);
+    if ($root === null) {
+        return false;
+    }
+
+    return strlen($text) <= 100;
+}
+
+function wiktionary_parse_word_entries(array $config, string $word): ?array
+{
+    $wordId = strtolower($word);
+    $fetch = wiktionary_fetch_parse($config, $wordId);
+    if (!$fetch['ok'] || isset($fetch['data']['error'])) {
+        return null;
+    }
+
+    $html = $fetch['data']['parse']['text'] ?? '';
+    if (is_array($html)) {
+        $html = $html['*'] ?? '';
+    }
+    if ($html === '') {
+        return null;
+    }
+
+    $entries = wiktionary_extract_etymologies((string) $html);
+
+    return $entries ?: null;
+}
+
+function wiktionary_enrich_with_root_etymologies(array $config, array $entries, string $wordId): array
+{
+    $roots = [];
+
+    foreach ($entries as $entry) {
+        foreach ($entry['etymologies'] as $text) {
+            if (!wiktionary_is_short_derivation($text)) {
+                continue;
+            }
+            $root = wiktionary_extract_derivation_root($text);
+            if ($root === null || $root === $wordId) {
+                continue;
+            }
+            $roots[$root] = true;
+        }
+    }
+
+    foreach (array_keys($roots) as $root) {
+        $rootEntries = wiktionary_parse_word_entries($config, $root);
+        if (!$rootEntries) {
+            continue;
+        }
+
+        $rootEntry = $rootEntries[0];
+        $entries[] = [
+            'lexicalCategory' => $root,
+            'etymologies' => $rootEntry['etymologies'],
+            'definitions' => [],
+        ];
+    }
+
+    return $entries;
+}
+
 function wiktionary_lookup(array $config, string $word): array
 {
     $wordId = strtolower($word);
@@ -255,6 +329,8 @@ function wiktionary_lookup(array $config, string $word): array
             'word' => $wordId,
         ];
     }
+
+    $entries = wiktionary_enrich_with_root_etymologies($config, $entries, $wordId);
 
     return [
         'ok' => true,

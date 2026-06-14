@@ -564,6 +564,11 @@ hr {
   margin-bottom: 1.25rem;
 }
 
+.etymology-entry + .etymology-entry {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
 .etymology-entry:last-child { margin-bottom: 0; }
 
 .etymology-category {
