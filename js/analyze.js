@@ -27,14 +27,15 @@
   // borrowed across a sentence break or a semicolon.
   const BOUNDARY = /[.!?;]/;
 
-  // form -> { id, scan, neg:Set }
+  // form -> { id, scan, neg:Set, negNext:Set }
   const FORM_MAP = new Map();
   const TERM_BY_ID = new Map();
   TERMS.forEach((t) => {
     TERM_BY_ID.set(t.id, t);
     if (!t.scan || !Array.isArray(t.forms)) return;
     const neg = new Set((t.negativePrev || []).map((s) => s.toLowerCase()));
-    t.forms.forEach((f) => FORM_MAP.set(f.toLowerCase(), { id: t.id, scan: t.scan, neg: neg }));
+    const negNext = new Set((t.negativeNext || []).map((s) => s.toLowerCase()));
+    t.forms.forEach((f) => FORM_MAP.set(f.toLowerCase(), { id: t.id, scan: t.scan, neg: neg, negNext: negNext }));
   });
 
   function tokenize(text) {
@@ -65,7 +66,10 @@
     for (let i = 0; i < tokens.length; i++) {
       const info = FORM_MAP.get(tokens[i].lower);
       if (!info) continue;
+      // Suppress when the neighbouring token marks a known non-AI sense
+      // (machine learning, belief state, decision tree, lies within, etc.).
       if (i > 0 && info.neg.has(tokens[i - 1].lower)) continue;
+      if (i < tokens.length - 1 && info.negNext.has(tokens[i + 1].lower)) continue;
       if (info.scan === "gated" && !cuePrecedes(text, tokens, i)) continue;
       hits.push({ start: tokens[i].start, end: tokens[i].end, id: info.id });
       counts.set(info.id, (counts.get(info.id) || 0) + 1);
